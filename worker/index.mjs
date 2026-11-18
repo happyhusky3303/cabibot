@@ -1,4 +1,4 @@
-import { commands, respondToCommand } from "./commands.mjs";
+import { commands, initModal, initModalId, respondToCommand, submitInit } from "./commands.mjs";
 import { withDatabase } from "./database.mjs";
 
 const discordApi = "https://discord.com/api/v10";
@@ -39,7 +39,7 @@ async function finishCommand(interaction, env) {
   let message;
   try {
     message = await withDatabase(env.HYPERDRIVE.connectionString, (db) =>
-      respondToCommand(interaction, db),
+      interaction.type === 5 ? submitInit(interaction, db) : respondToCommand(interaction, db),
     );
   } catch (error) {
     console.error("Cabi command failed", interaction.data.name, error.code ?? error.name);
@@ -81,7 +81,11 @@ export default {
       return new Response("Invalid JSON", { status: 400 });
     }
     if (interaction?.type === 1) return Response.json({ type: 1 });
-    if (interaction?.type !== 2 || !commandNames.has(interaction.data?.name)) {
+    const name = interaction?.data?.name;
+    const isCommand = interaction?.type === 2 && commandNames.has(name);
+    const isInitSubmission = interaction?.type === 5 && interaction.data?.custom_id === initModalId;
+    if (isCommand && name === "init") return Response.json({ type: 9, data: initModal });
+    if (!isCommand && !isInitSubmission) {
       return Response.json({ type: 4, data: { content: "Lệnh này không khả dụng.", flags: 64 } });
     }
 
@@ -89,7 +93,7 @@ export default {
     // Acknowledge immediately so database latency cannot exceed Discord's initial deadline.
     return Response.json({
       type: 5,
-      ...(interaction.data.name === "foods" ? { data: { flags: 64 } } : {}),
+      ...(isInitSubmission || name === "foods" || name === "editinfo" ? { data: { flags: 64 } } : {}),
     });
   },
 };

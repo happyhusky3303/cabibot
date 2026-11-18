@@ -4,9 +4,12 @@ A Python 3.12 Discord bot for feeding your own Cabi. Each Discord account has on
 
 ## Commands
 
-- `/capsieubeo` creates your Cabi on the first meal. Cabi starts at 3 kg. Each meal rolls an equal chance of gaining 0.1 to 1 kg in 0.1 kg steps, then selects a random food in the matching size. Small covers 0.1–0.3 kg, medium 0.4–0.7 kg, and big 0.8–1 kg.
+- `/init` opens the Vietnamese setup form on the Cloudflare Worker. Enter what Cabi should call you and optionally give Cabi a name and bio. A new Cabi starts at 3 kg. Existing players can use the form to add profile details and keep their weight and meals.
+- `/editinfo` edits the supplied `name`, `cabiname`, and `desc` options on the Worker. Omitted options keep their current values. Use `-` for `cabiname` or `desc` to clear that field.
+- `/capsieubeo` feeds your Cabi. On the Worker, complete `/init` first. Each meal rolls an equal chance of gaining 0.1 to 1 kg in 0.1 kg steps, then selects a random food in the matching size. Small covers 0.1–0.3 kg, medium 0.4–0.7 kg, and big 0.8–1 kg.
 - `/cabi` shows your Cabi's weight, meal count, discoveries, most-eaten food, and biggest meal. Use the optional `player` argument to see another player's card.
 - `/foods` shows your private collection of 15 foods. Untried foods appear as `???`. Some foods form families across sizes, including three kinds of dumplings.
+- `/gym` on Cloudflare gives an initialized Cabi a 0.5% chance of working out and losing 0.1–0.5 kg, down to a minimum of 1 kg. Otherwise, Cabi picks a random excuse from `worker/gym-excuses.json`.
 
 Feeding announces first discoveries and celebrates reaching 5, 10, 20, 50, and 100 kg.
 
@@ -63,7 +66,7 @@ The container uses the same startup command and receives credentials at runtime.
 
 ## Deploy on Cloudflare Workers
 
-The Worker is an alternative to running the Python bot. It accepts signed Discord interactions at `/interactions` and uses the same `cabi_game` tables. Apply `sql/001_cabi.sql` in Supabase before the first run. Keep the Hyperdrive configuration's query caching disabled so profiles can show freshly recorded meals.
+The Worker is an alternative to running the Python bot. It accepts signed Discord interactions at `/interactions` and uses the same `cabi_game` tables. Apply the SQL migrations in numeric order before deploying. If the profile migration is already applied, run `sql/003_cabi_gym.sql` before deploying the gym update. Keep Hyperdrive query caching disabled so profiles show freshly recorded changes.
 
 Use Node.js 22 or newer. From the project directory, sign in to the Cloudflare account that owns `cabibot`:
 
@@ -77,11 +80,11 @@ npx wrangler secret put DISCORD_PUBLIC_KEY
 
 For `DISCORD_PUBLIC_KEY`, use **Public Key** from your Discord application's **General Information** page. Use the Worker URL printed by Wrangler and append `/interactions`. Paste that full URL into **Interactions Endpoint URL** in the same Discord application and save. Discord sends a signed verification ping. Once it accepts the URL, Discord sends interactions to the Worker.
 
-If the three slash commands are already registered for this Discord application, use them as they are. Otherwise, from the `worker` directory, set `DISCORD_APPLICATION_ID` to the application's ID and load `DISCORD_BOT_TOKEN` locally. For example, if the token is already in the project's ignored `.env`:
+When first setting up the Worker or adding or changing a slash command, register the commands after deploying. From the `worker` directory, set `DISCORD_APPLICATION_ID` to the application's ID and load `DISCORD_BOT_TOKEN` locally. For example, if the token is already in the project's ignored `.env`:
 
 ```powershell
 $env:DISCORD_APPLICATION_ID = "YOUR_APPLICATION_ID"
 node --env-file=../.env register-commands.mjs
 ```
 
-The registration script updates the three Cabi commands by name. The deployed Worker only needs the Discord public key and the configured `HYPERDRIVE` binding. Test `/cabi`, `/capsieubeo`, and `/foods` in Discord after switching over.
+The registration script updates the Cabi commands by name. The deployed Worker needs the Discord public key and the configured `HYPERDRIVE` binding. Test `/init`, `/editinfo`, `/cabi`, `/capsieubeo`, `/foods`, and `/gym` in Discord after switching over.
