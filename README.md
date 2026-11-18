@@ -15,6 +15,7 @@ Feeding announces first discoveries and celebrates reaching 5, 10, 20, 50, and 1
 - `bot/__main__.py` starts the bot.
 - `bot/client.py` connects to Discord and syncs the slash commands.
 - `bot/commands.py` builds command responses, and `bot/food.py` defines foods and weight rolls.
+- `bot/catalog.json` contains the food IDs, Vietnamese names, starting weight, and milestones shared by both runtimes.
 - `bot/config.py` loads and validates environment variables.
 - `bot/database.py` reads profiles and records meals and weight in PostgreSQL.
 - `sql/001_cabi.sql` creates the game tables.
@@ -59,3 +60,28 @@ The container uses the same startup command and receives credentials at runtime.
 4. After deployment, check the worker logs for command sync and the Discord connection. Use `/capsieubeo` in Discord to verify the database setup.
 
 [Render Blueprint reference](https://render.com/docs/blueprint-spec) · [Supabase PostgreSQL connections](https://supabase.com/docs/guides/database/connecting-to-postgres)
+
+## Deploy on Cloudflare Workers
+
+The Worker is an alternative to running the Python bot. It accepts signed Discord interactions at `/interactions` and uses the same `cabi_game` tables. Apply `sql/001_cabi.sql` in Supabase before the first run. Keep the Hyperdrive configuration's query caching disabled so profiles can show freshly recorded meals.
+
+Use Node.js 22 or newer. From the project directory, sign in to the Cloudflare account that owns `cabibot`:
+
+```powershell
+cd worker
+npm ci
+npx wrangler login
+npm run deploy
+npx wrangler secret put DISCORD_PUBLIC_KEY
+```
+
+For `DISCORD_PUBLIC_KEY`, use **Public Key** from your Discord application's **General Information** page. Use the Worker URL printed by Wrangler and append `/interactions`. Paste that full URL into **Interactions Endpoint URL** in the same Discord application and save. Discord sends a signed verification ping. Once it accepts the URL, Discord sends interactions to the Worker.
+
+If the three slash commands are already registered for this Discord application, use them as they are. Otherwise, from the `worker` directory, set `DISCORD_APPLICATION_ID` to the application's ID and load `DISCORD_BOT_TOKEN` locally. For example, if the token is already in the project's ignored `.env`:
+
+```powershell
+$env:DISCORD_APPLICATION_ID = "YOUR_APPLICATION_ID"
+node --env-file=../.env register-commands.mjs
+```
+
+The registration script updates the three Cabi commands by name. The deployed Worker only needs the Discord public key and the configured `HYPERDRIVE` binding. Test `/cabi`, `/capsieubeo`, and `/foods` in Discord after switching over.

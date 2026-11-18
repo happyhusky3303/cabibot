@@ -1,32 +1,11 @@
+import json
 import random
+from pathlib import Path
 
-STARTING_WEIGHT = 3000
-MILESTONES = (5000, 10000, 20000, 50000, 100000)
-
-# Keep food IDs stable after players discover them.
-FOODS = {
-    "Small": {
-        "mini-dumpling": "Há cảo mini",
-        "blueberry": "Việt quất",
-        "rice-cracker": "Bánh gạo giòn",
-        "strawberry": "Dâu tây",
-        "butter-cookie": "Bánh quy bơ",
-    },
-    "Medium": {
-        "dumpling-basket": "Xửng há cảo hấp",
-        "mango-sticky-rice": "Xôi xoài",
-        "egg-sandwich": "Bánh mì kẹp trứng",
-        "berry-parfait": "Ly sữa chua trái cây mọng",
-        "pancakes": "Chồng bánh pancake",
-    },
-    "Big": {
-        "soup-dumpling": "Tiểu long bao khổng lồ",
-        "noodle-feast": "Tiệc mì",
-        "pizza": "Cả chiếc pizza",
-        "berry-cake": "Bánh kem trái cây mọng ba tầng",
-        "rice-platter": "Đĩa cơm chiên đầy ụ",
-    },
-}
+_catalog = json.loads(Path(__file__).with_name("catalog.json").read_text(encoding="utf-8"))
+STARTING_WEIGHT = _catalog["startingWeight"]
+MILESTONES = tuple(_catalog["milestones"])
+FOODS = _catalog["foods"]
 FOOD_NAMES = {food_id: name for group in FOODS.values() for food_id, name in group.items()}
 
 
