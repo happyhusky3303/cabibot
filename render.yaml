@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: cabi-bot
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
