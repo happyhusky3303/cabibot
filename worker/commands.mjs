@@ -79,6 +79,27 @@ function kilograms(grams) {
   return `${number.format(weight / 1000n)}${fraction ? "," + fraction : ""} kg`;
 }
 
+function rollMeal() {
+  const roll = Math.random() * 100;
+  let threshold = 0;
+  let size;
+  for (const [candidate, settings] of Object.entries(catalog.mealSizes)) {
+    threshold += settings.chance;
+    if (roll < threshold) {
+      size = candidate;
+      break;
+    }
+  }
+  if (!size) throw new Error("Meal size chances must cover the full 100% roll.");
+
+  const { minGainGrams, maxGainGrams } = catalog.mealSizes[size];
+  const gainSteps = (maxGainGrams - minGainGrams) / 100 + 1;
+  const gain = minGainGrams + Math.floor(Math.random() * gainSteps) * 100;
+  const ids = Object.keys(catalog.foods[size]);
+  const foodId = ids[Math.floor(Math.random() * ids.length)];
+  return { foodId, size, gain };
+}
+
 export async function respondToCommand(interaction, db) {
   const user = interaction.member?.user ?? interaction.user;
   const { name, options, resolved } = interaction.data;
@@ -129,10 +150,7 @@ export async function respondToCommand(interaction, db) {
   }
 
   if (name === "capsieubeo") {
-    const gain = (Math.floor(Math.random() * 10) + 1) * 100;
-    const size = gain <= 300 ? "Small" : gain <= 700 ? "Medium" : "Big";
-    const ids = Object.keys(catalog.foods[size]);
-    const foodId = ids[Math.floor(Math.random() * ids.length)];
+    const { foodId, size, gain } = rollMeal();
     const result = await db.feed(user.id, interaction.id, foodId, gain);
     if (!result) return { content: "Bữa ăn này đã được ghi nhận." };
     if (result.needsInit) return needsInit;

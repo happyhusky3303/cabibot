@@ -6,9 +6,9 @@ A Python 3.12 Discord bot for feeding your own Cabi. Each Discord account has on
 
 - `/init` opens the Vietnamese setup form on the Cloudflare Worker. Enter what Cabi should call you and optionally give Cabi a name and bio. A new Cabi starts at 3 kg. Existing players can use the form to add profile details and keep their weight and meals.
 - `/editinfo` edits the supplied `name`, `cabiname`, and `desc` options on the Worker. Omitted options keep their current values. Use `-` for `cabiname` or `desc` to clear that field.
-- `/capsieubeo` feeds your Cabi. On the Worker, complete `/init` first. Each meal rolls an equal chance of gaining 0.1 to 1 kg in 0.1 kg steps, then selects a random food in the matching size. Small covers 0.1–0.3 kg, medium 0.4–0.7 kg, and big 0.8–1 kg.
+- `/capsieubeo` feeds your Cabi. On the Worker, complete `/init` first. Small foods gain 0.1–10 kg, medium foods 10–50 kg, and big foods 50–100 kg, in 0.1 kg steps. Each meal has a 70% chance of small food, 25% medium, and 5% big.
 - `/cabi` shows your Cabi's weight, meal count, discoveries, most-eaten food, and biggest meal. Use the optional `player` argument to see another player's card.
-- `/foods` shows your private collection of 15 foods. Untried foods appear as `???`. Some foods form families across sizes, including three kinds of dumplings.
+- `/foods` shows your private collection of 600 foods. Untried foods appear as `???`. Some foods form families across sizes, including three kinds of dumplings.
 - `/gym` on Cloudflare gives an initialized Cabi a 0.5% chance of working out and losing 0.1–0.5 kg, down to a minimum of 1 kg. Otherwise, Cabi picks a random excuse from `worker/gym-excuses.json`.
 
 Feeding announces first discoveries and celebrates reaching 5, 10, 20, 50, and 100 kg.
